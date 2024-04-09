@@ -15,6 +15,7 @@ class Message(BaseModel):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content_type = models.ForeignKey(
         'contenttypes.ContentType', on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
     content = models.TextField()  # Store textual contents
     # Additional fields for multimedia
     media_file = models.FileField(upload_to='direct_messages/', blank=True, null=True)

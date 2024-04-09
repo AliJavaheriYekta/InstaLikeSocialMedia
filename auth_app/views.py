@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from auth_app.serializers import LoginSerializer
 
 
-# from ToyStore.local_settings import ADMIN_PATH
+# from SocialMedia.local_settings import ADMIN_PATH
 
 
 # Create your views here.
@@ -18,13 +18,17 @@ def register(request):
     username = request.data.get('username')
     password = request.data.get('password')
     if username is not None and password is not None:
-        user = User.objects.create_user(username, password=password)
-        if user:
-            return Response({'success': 'User registered!'})
-        # token = Token.objects.create(user=user)
-        # return Response({'token': token.key})
-        else:
-            return Response({'error': 'User with this credential does not exist!'})
+        try:
+            User.objects.get(username=username)
+            return Response({'error': 'User already registered!'})
+        except User.DoesNotExist:
+            user = User.objects.create_user(username, password=password)
+            if user:
+                return Response({'success': 'User registered!'})
+            # token = Token.objects.create(user=user)
+            # return Response({'token': token.key})
+            else:
+                return Response({'error': 'An error occurred during user registration!'})
     else:
         return Response({'error': 'Username and password are required'})
 

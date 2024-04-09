@@ -2,12 +2,17 @@ from django.contrib import admin
 from django.utils.html import mark_safe
 
 from .forms import CommentAdminForm
-from .models import Post, Media, Story, Mention, Comment, Like
+from .models import Post, Media, Story, Mention, Comment, Like, PostMedia
 
 
 class MediaInline(admin.TabularInline):
     model = Media
     extra = 1  # Allow adding one extra media per post by default
+
+
+class PostMediaInline(admin.TabularInline):
+    model = PostMedia
+    extra = 1
 
 
 class CommentInline(admin.TabularInline):
@@ -21,8 +26,8 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 class PostAdmin(admin.ModelAdmin):
-    inlines = [MediaInline, CommentInline]  # Inline display of related media
-    list_display = ('user', 'text', 'created_at', 'get_like_count')  # Customize displayed fields
+    inlines = [PostMediaInline, CommentInline]  # Inline display of related media
+    list_display = ('id', 'user', 'caption', 'created_at', 'get_like_count')  # Customize displayed fields
     list_filter = ('user',)  # Filter by user
     readonly_fields = ('comments_count', 'likes_count')
 
@@ -32,7 +37,7 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class MediaAdmin(admin.ModelAdmin):
-    list_display = ('post', 'get_thumbnail')  # Customize displayed fields
+    list_display = ('id', '__str__', 'get_thumbnail')  # Customize displayed fields
 
     def get_file_type(self, obj):
         return obj.content_type.app_label  # Extract content type app name
@@ -68,7 +73,7 @@ class MentionAdmin(admin.ModelAdmin):
         model_class = content_type.model_class()
         try:
             # Attempt to retrieve the mentioned object
-            mentioned_object = model_class.objects.get(pk=obj.content_object_id)
+            mentioned_object = model_class.objects.get(pk=obj.object_id)
             return str(mentioned_object)
         except (model_class.DoesNotExist, PermissionError):
             return f"Object (pk={obj.content_object_id}) not found"
