@@ -104,7 +104,7 @@ class StoryViewSet(viewsets.ModelViewSet):
 class MediaViewSet(viewsets.ModelViewSet):
     queryset = Media.objects.all()
     serializer_class = MediaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     http_method_names = ['get', 'post', 'delete']
 
     def perform_create(self, serializer):
@@ -135,12 +135,14 @@ class BaseStoryViewViewSet(viewsets.ModelViewSet):
 
 class StoryViewViewSet(BaseStoryViewViewSet):
     http_method_names = ['get', 'post']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class ListStoryViewSet(BaseStoryViewViewSet):
     queryset = StoryView.objects.all()
     serializer_class = StoryViewSerializer
     http_method_names = ['get', ]
+    permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, story_pk=None, *args, **kwargs):
         # Override list method to filter by story ID
@@ -157,3 +159,5 @@ class MentionViewSet(viewsets.ModelViewSet):
     queryset = Mention.objects.all()
     serializer_class = MentionSerializer
     http_method_names = ['get', 'post', 'delete']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+

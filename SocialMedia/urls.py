@@ -25,7 +25,8 @@ urlpatterns = [
     path('auth/', include("auth_app.urls")),
     path('content/', include("contents.urls")),
     path('profile/', include("user_profile.urls")),
-    path('direct/', include("directs.urls"))
+    path('direct/', include("directs.urls")),
+    path('logger/', include("logger.urls"))
 ]
 
 # Serve media files during development
