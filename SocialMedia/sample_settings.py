@@ -5,3 +5,18 @@ SECRET_KEY = ''
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+MEDIA_URL = ''
+
+GOOGLE_CALLBACK_URL = ""
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'CLIENT_ID': '',
+        'SCOPE': [
+        ],
+        'AUTH_PARAMS': {
+            'access_type': '',
+        }
+    }
+}

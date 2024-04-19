@@ -16,13 +16,14 @@ Including another URLconf
 """
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from SocialMedia import settings, local_settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', include("auth_app.urls")),
+    path('', include("auth_app.urls")),
+    # path("accounts/", include("allauth.urls")),  # most important
     path('content/', include("contents.urls")),
     path('profile/', include("user_profile.urls")),
     path('direct/', include("directs.urls")),

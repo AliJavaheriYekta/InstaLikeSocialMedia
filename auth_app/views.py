@@ -1,4 +1,7 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
+from django.views.generic import RedirectView
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
@@ -6,7 +9,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from SocialMedia.local_settings import GOOGLE_CALLBACK_URL
 from auth_app.serializers import LoginSerializer
+
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+from SocialMedia.settings import SOCIALACCOUNT_PROVIDERS as social_providers
 
 
 # from SocialMedia.local_settings import ADMIN_PATH
@@ -64,3 +73,34 @@ class LoginView(APIView):
                 token.delete()
                 token = Token.objects.create(user=user)
             return Response({'token': token.key}, status=status.HTTP_200_OK)
+
+
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = GOOGLE_CALLBACK_URL
+    client_class = OAuth2Client
+
+
+class UserRedirectView(LoginRequiredMixin, RedirectView):
+    """
+    This view is needed by the dj-rest-auth-library in order to work the google login. It's a bug.
+    """
+
+    permanent = False
+
+    def get_redirect_url(self):
+        return "redirect-url"
+
+
+class SocialAuthGoogleURLRedirectView(APIView):
+    # pattern_name = 'google-login-redirect'
+    def get(self, request, *args, **kwargs):
+        params = social_providers['google']
+        url = 'https://accounts.google.com/o/oauth2/v2/auth?' \
+              'redirect_uri={GOOGLE_CALLBACK_URL}&prompt=consent&response_type=code&' \
+              'client_id={CLIENT_ID}&scope=openid%20email%20profile&access_type={ACCESS_TYPE}'\
+            .format(GOOGLE_CALLBACK_URL=GOOGLE_CALLBACK_URL,
+                    CLIENT_ID=params.get('CLIENT_ID'),
+                    ACCESS_TYPE=params.get('AUTH_PARAMS').get('access_type'))
+
+        return HttpResponseRedirect(url)
