@@ -143,6 +143,13 @@ class MediaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     http_method_names = ['get', 'post', 'delete']
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         serializer.save()
 
@@ -155,13 +162,13 @@ class MediaViewSet(viewsets.ModelViewSet):
     def destroy(self, request, pk=None, *args, **kwargs):
         media = self.get_object()
         serializer = MediaSerializer(media, context={'request': request})
-
+        # serializer.is_valid(raise_exception=True)
         try:
             serializer.undo_create_actions(media)  # Call the undo function
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             # Handle any errors during undo or deletion
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(e.args[0], status=status.HTTP_403_FORBIDDEN)
 
 
 class BaseStoryViewViewSet(viewsets.ModelViewSet):

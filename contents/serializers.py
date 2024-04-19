@@ -17,6 +17,7 @@ class MediaSerializer(serializers.ModelSerializer):
         content_type_app_label = validated_data.pop('content_type')
         object_id = validated_data.pop('object_id')
 
+
         try:
             content_type = ContentType.objects.get(
                 app_label=content_type_app_label['app_label'].split('|')[0].strip().lower(),
@@ -24,24 +25,36 @@ class MediaSerializer(serializers.ModelSerializer):
             )
         except ContentType.DoesNotExist:
             raise ValidationError({'content_type': 'Invalid content type provided.'})
-        # Create the media object with remaining data and related object
-        try:
-            media = Media.objects.create(content_type=content_type, object_id=object_id, **validated_data)
-        except Exception as e:  # Catch generic exception for broader error handling
-            raise ValidationError({'non_field_errors': str(e)})
 
-        related_object = content_type.get_object_for_this_type(pk=media.object_id)
+        related_object = content_type.get_object_for_this_type(pk=object_id)
         content_type_model = related_object._meta.object_name
+
+        if related_object.user == self.context['request'].user:
+            try:
+                media = Media.objects.create(content_type=content_type, object_id=object_id, **validated_data)
+            except Exception as e:  # Catch generic exception for broader error handling
+                raise ValidationError({'non_field_errors': str(e)})
+        else:
+            raise ValidationError({'auth_error': 'Only the owner is authorized to add media!'})
+
         if content_type_model == 'Post':
-            PostMedia.objects.create(post=related_object, media=media)
+                PostMedia.objects.create(post=related_object, media=media)
+
         elif content_type_model == 'Story':
-            StoryMedia.objects.create(story=related_object, media=media)
+                StoryMedia.objects.create(story=related_object, media=media)
+
         return media
 
     def undo_create_actions(self, media):
         """Undoes the actions taken in the create() method."""
-        related_object = media.content_type.get_object_for_this_type(pk=media.object_id)
+        try:
+            related_object = media.content_type.get_object_for_this_type(pk=media.object_id)
+        except:
+            raise ValidationError({'error': 'media does not exist!'})
         content_type_model = related_object._meta.object_name
+
+        if related_object.user != self.context['request'].user:
+            raise ValidationError({'auth_error': 'Only the owner is authorized to delete media!'})
 
         # Delete associated model instances
         if content_type_model == 'Post':
