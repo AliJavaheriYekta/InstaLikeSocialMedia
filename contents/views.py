@@ -11,7 +11,25 @@ from .serializers import PostSerializer, CommentSerializer, StorySerializer, Med
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        post_pk = self.kwargs['pk']
+        post_user = Post.objects.get(pk=self.kwargs['pk']).user
+        if (not post_user.profile.is_private) or (post_user.id in user.followings.all().values_list('following', flat=True)):
+            serializer = self.get_serializer(Post.objects.get(pk=post_pk))
+            return Response(serializer.data)
+        else:
+            return Response(status=HTTP_401_UNAUTHORIZED)
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = Post.objects.filter(user__in=user.followings.all().values_list('following', flat=True))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+        # Handle case where no story_pk is provided (optional)
+        # return Response({'error': 'Missing story ID in URL'})
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -71,6 +89,24 @@ class StoryViewSet(viewsets.ModelViewSet):
     serializer_class = StorySerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get', 'post', 'delete', 'patch']
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        post_pk = self.kwargs['pk']
+        story_user = Story.objects.get(pk=self.kwargs['pk']).user
+        if (not story_user.profile.is_private) or (story_user.id in user.followings.all().values_list('following', flat=True)):
+            serializer = self.get_serializer(Story.objects.get(pk=post_pk))
+            return Response(serializer.data)
+        else:
+            return Response(status=HTTP_401_UNAUTHORIZED)
+
+        # queryset = re
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = Story.objects.filter(user__in=user.followings.all().values_list('following', flat=True))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
