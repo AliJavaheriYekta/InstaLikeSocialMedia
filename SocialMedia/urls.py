@@ -19,9 +19,10 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 
 from SocialMedia import settings, local_settings
+from SocialMedia.local_settings import ADMIN_PATH
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(f'{ADMIN_PATH}/', admin.site.urls),
     path('', include("auth_app.urls")),
     # path("accounts/", include("allauth.urls")),  # most important
     path('content/', include("contents.urls")),
